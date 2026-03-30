@@ -1,1 +1,1 @@
-PokéAPI  -->  Fivetran Custom Connector  -->  Snowflake (raw)  -->  dbt  -->  Snowflake (marts)
+PokéAPI  →  Fivetran Connector SDK  →  Snowflake (raw)  →  dbt Core  →  Snowflake (marts)
