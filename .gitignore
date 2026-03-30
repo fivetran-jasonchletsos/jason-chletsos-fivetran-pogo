@@ -9,6 +9,7 @@ dbt_pokemon_go/profiles.yml
 dbt_pokemon_go/target/
 dbt_pokemon_go/dbt_packages/
 dbt_pokemon_go/logs/
+logs/
 
 # Python
 .venv/
