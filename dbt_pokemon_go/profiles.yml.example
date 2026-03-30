@@ -3,7 +3,7 @@
 # Fivetran's dbt Core transformation manages its own connection — this file
 # is only used when running dbt locally.
 
-pokemon_go:
+twilight_expecting:
   target: dev
   outputs:
     dev:
