@@ -4,6 +4,8 @@ name: 'pokemon_go_dbt'
 version: '1.0.0'
 config-version: 2
 
+# Profile name matches Fivetran destination group ID (used by Fivetran dbt Core transformation)
+# For local development, ensure your profiles.yml has a profile named 'twilight_expecting'
 profile: 'twilight_expecting'
 
 model-paths: ["models"]
@@ -17,33 +19,14 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
-# ---------------------------------------------------------------------------
-# Run Cache configuration
-# ---------------------------------------------------------------------------
-flags:
-  # Defer from the "prod" target (already defined in profiles.yml)
-  run_cache_defer_to: prod
-
-  # Freshness tolerance: in prod runs skip models whose upstream data hasn't
-  # changed within the last 12 hours; locally give developers a 7-day window
-  # so repeated runs don't re-materialise unchanged models.
-  run_cache_freshness_tolerance: "{{ '12 hours' if target.name == 'prod' else '7 days' }}"
-
 models:
   pokemon_go_dbt:
     staging:
       +materialized: view
       +schema: pokemon_staging
-      # Override freshness tolerance at the folder level.
-      # Staging views are cheap; tolerate slightly longer windows than the
-      # global default so they are only re-run when source data is actually new.
-      +run_cache_freshness_tolerance: "{{ '12 hours' if target.name == 'prod' else '7 days' }}"
     marts:
       +materialized: table
       +schema: pokemon_marts
-      # Mart tables are expensive; use the same cadence as global default but
-      # make it explicit so it can be tuned independently.
-      +run_cache_freshness_tolerance: "{{ '12 hours' if target.name == 'prod' else '7 days' }}"
 
 vars:
   # Use default warehouse (no need to specify)

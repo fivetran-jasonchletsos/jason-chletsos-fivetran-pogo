@@ -1,7 +1,6 @@
 {{
     config(
-        materialized='view',
-        run_cache_freshness_tolerance='24h' if target.name == 'prod' else '7d'
+        materialized='view'
     )
 }}
 

@@ -1,7 +1,6 @@
 {{
     config(
-        materialized='table',
-        run_cache_freshness_tolerance='12h' if target.name == 'prod' else '7d'
+        materialized='table'
     )
 }}
 
