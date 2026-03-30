@@ -1,0 +1,181 @@
+version: 2
+
+models:
+  - name: stg_pokemon
+    description: Staging view for core Pokémon data with standardized column names and types
+    columns:
+      - name: pokemon_id
+        description: Unique Pokémon identifier (National Dex number)
+        tests:
+          - unique
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name in lowercase
+        tests:
+          - not_null
+      - name: base_experience
+        description: Base experience yield when defeated in battle
+      - name: height_decimeters
+        description: Height in decimeters (10 = 1 meter)
+      - name: weight_hectograms
+        description: Weight in hectograms (10 = 1 kilogram)
+      - name: is_default_form
+        description: True if this is the default form of the Pokémon
+      - name: pokedex_order
+        description: Sort order in the National Pokédex
+      - name: species_id
+        description: Foreign key to species table
+        tests:
+          - not_null
+  
+  - name: stg_pokemon_stats
+    description: Staging view for Pokémon stat values
+    columns:
+      - name: pokemon_id
+        description: Foreign key to pokemon
+        tests:
+          - not_null
+      - name: stat_name
+        description: Stat name (hp, attack, defense, special-attack, special-defense, speed)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
+      - name: base_stat_value
+        description: Base value of the stat (typically 1-255)
+      - name: effort_value
+        description: Effort value (EV) gained when defeating this Pokémon
+  
+  - name: stg_pokemon_types
+    description: Staging view for Pokémon type assignments
+    columns:
+      - name: pokemon_id
+        description: Foreign key to pokemon
+        tests:
+          - not_null
+      - name: type_name
+        description: Type name (e.g., fire, water, grass)
+        tests:
+          - not_null
+      - name: type_slot
+        description: Type slot (1 = primary type, 2 = secondary type)
+        tests:
+          - accepted_values:
+              values: [1, 2]
+  
+  - name: stg_pokemon_abilities
+    description: Staging view for Pokémon ability assignments
+    columns:
+      - name: pokemon_id
+        description: Foreign key to pokemon
+        tests:
+          - not_null
+      - name: ability_name
+        description: Ability name
+        tests:
+          - not_null
+      - name: is_hidden_ability
+        description: True if this is a hidden ability (only obtainable through special means)
+      - name: ability_slot
+        description: Ability slot number
+  
+  - name: stg_pokemon_moves
+    description: Staging view for Pokémon move learnsets
+    columns:
+      - name: pokemon_id
+        description: Foreign key to pokemon
+        tests:
+          - not_null
+      - name: move_name
+        description: Move name
+        tests:
+          - not_null
+      - name: level_learned_at
+        description: Level at which the move is learned (0 for non-level-up moves)
+      - name: learn_method
+        description: How the move is learned
+        tests:
+          - accepted_values:
+              values: ['level-up', 'machine', 'tutor']
+      - name: version_group
+        description: Game version group where this move can be learned
+  
+  - name: stg_types
+    description: Staging view for type effectiveness data
+    columns:
+      - name: type_id
+        description: Unique type identifier
+        tests:
+          - unique
+          - not_null
+      - name: type_name
+        description: Type name
+        tests:
+          - not_null
+      - name: double_damage_to
+        description: Comma-separated list of types this type is super effective against
+      - name: half_damage_to
+        description: Comma-separated list of types this type is not very effective against
+      - name: no_damage_to
+        description: Comma-separated list of types this type has no effect on
+      - name: double_damage_from
+        description: Comma-separated list of types that are super effective against this type
+      - name: half_damage_from
+        description: Comma-separated list of types that are not very effective against this type
+      - name: no_damage_from
+        description: Comma-separated list of types that have no effect on this type
+  
+  - name: stg_moves
+    description: Staging view for move details
+    columns:
+      - name: move_id
+        description: Unique move identifier
+        tests:
+          - unique
+          - not_null
+      - name: move_name
+        description: Move name
+        tests:
+          - not_null
+      - name: accuracy
+        description: Move accuracy percentage (NULL for moves that never miss)
+      - name: power
+        description: Base power of the move (NULL for status moves)
+      - name: pp
+        description: Power Points (number of times the move can be used)
+      - name: move_type
+        description: Type of the move
+      - name: damage_class
+        description: Damage class of the move
+        tests:
+          - accepted_values:
+              values: ['physical', 'special', 'status']
+      - name: effect_chance
+        description: Percentage chance of secondary effect occurring
+  
+  - name: stg_species
+    description: Staging view for Pokémon species data
+    columns:
+      - name: species_id
+        description: Unique species identifier
+        tests:
+          - unique
+          - not_null
+      - name: species_name
+        description: Species name
+        tests:
+          - not_null
+      - name: capture_rate
+        description: Base capture rate (0-255, higher = easier to catch)
+      - name: base_happiness
+        description: Base happiness value
+      - name: is_legendary
+        description: True if this is a legendary Pokémon
+      - name: is_mythical
+        description: True if this is a mythical Pokémon
+      - name: generation
+        description: Generation in which this species was introduced
+      - name: habitat
+        description: Natural habitat of this species
+      - name: body_shape
+        description: Body shape classification

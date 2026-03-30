@@ -1,0 +1,19 @@
+# Environment variables (never commit credentials)
+.env
+**/.env
+
+# dbt profiles (contains credentials - use profiles.yml.example as template)
+dbt_pokemon_go/profiles.yml
+
+# dbt artifacts
+dbt_pokemon_go/target/
+dbt_pokemon_go/dbt_packages/
+dbt_pokemon_go/logs/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

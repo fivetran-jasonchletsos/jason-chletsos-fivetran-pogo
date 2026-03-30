@@ -1,0 +1,264 @@
+version: 2
+
+models:
+  - name: dim_pokemon
+    description: Wide denormalized dimension table containing all core Pokémon attributes including types, species data, and physical characteristics
+    columns:
+      - name: pokemon_id
+        description: Unique Pokémon identifier (National Dex number)
+        tests:
+          - unique
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name
+        tests:
+          - not_null
+      - name: primary_type
+        description: Primary type (slot 1)
+        tests:
+          - not_null
+      - name: secondary_type
+        description: Secondary type (slot 2), NULL for mono-type Pokémon
+      - name: is_legendary
+        description: True if this is a legendary Pokémon
+      - name: is_mythical
+        description: True if this is a mythical Pokémon
+      - name: generation
+        description: Generation in which this Pokémon was introduced
+      - name: habitat
+        description: Natural habitat
+      - name: body_shape
+        description: Body shape classification
+      - name: base_experience
+        description: Base experience yield when defeated
+      - name: capture_rate
+        description: Base capture rate (0-255, higher = easier to catch)
+      - name: base_happiness
+        description: Base happiness value
+  
+  - name: dim_moves
+    description: Enriched moves dimension with calculated expected damage values
+    columns:
+      - name: move_id
+        description: Unique move identifier
+        tests:
+          - unique
+          - not_null
+      - name: move_name
+        description: Move name
+        tests:
+          - not_null
+      - name: move_type
+        description: Type of the move
+      - name: power
+        description: Base power (NULL for status moves)
+      - name: accuracy
+        description: Accuracy percentage (NULL for moves that never miss)
+      - name: pp
+        description: Power Points
+      - name: damage_class
+        description: Damage class (physical, special, status)
+        tests:
+          - accepted_values:
+              values: ['physical', 'special', 'status']
+      - name: effect_chance
+        description: Chance of secondary effect
+      - name: expected_damage
+        description: Calculated expected damage (power * accuracy / 100)
+  
+  - name: fct_pokemon_stats
+    description: Fact table with one row per Pokémon containing all six base stats pivoted into columns plus total base stats
+    columns:
+      - name: pokemon_id
+        description: Foreign key to dim_pokemon
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_pokemon')
+              field: pokemon_id
+      - name: pokemon_name
+        description: Pokémon name
+      - name: hp
+        description: Base HP stat
+      - name: attack
+        description: Base Attack stat
+      - name: defense
+        description: Base Defense stat
+      - name: sp_attack
+        description: Base Special Attack stat
+      - name: sp_defense
+        description: Base Special Defense stat
+      - name: speed
+        description: Base Speed stat
+      - name: total_base_stats
+        description: Sum of all six base stats
+  
+  - name: mart_top_attackers
+    description: Pokémon ranked by offensive capability (Attack stat) with tier classifications for battle recommendations
+    columns:
+      - name: pokemon_id
+        description: Unique Pokémon identifier
+        tests:
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name
+      - name: primary_type
+        description: Primary type
+      - name: secondary_type
+        description: Secondary type
+      - name: attack
+        description: Base Attack stat
+      - name: sp_attack
+        description: Base Special Attack stat
+      - name: total_base_stats
+        description: Total base stats
+      - name: is_legendary
+        description: Legendary status
+      - name: is_mythical
+        description: Mythical status
+      - name: tier
+        description: Offensive tier (S = 250+, A = 200+, B = 150+, C = below 150)
+        tests:
+          - accepted_values:
+              values: ['S', 'A', 'B', 'C']
+      - name: overall_rank
+        description: Overall rank by attack power
+      - name: rank_within_legendary_status
+        description: Rank within legendary/non-legendary grouping
+  
+  - name: mart_top_defenders
+    description: Pokémon ranked by defensive capability (Defense + HP) with tier classifications for gym defense recommendations
+    columns:
+      - name: pokemon_id
+        description: Unique Pokémon identifier
+        tests:
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name
+      - name: primary_type
+        description: Primary type
+      - name: secondary_type
+        description: Secondary type
+      - name: hp
+        description: Base HP stat
+      - name: defense
+        description: Base Defense stat
+      - name: sp_defense
+        description: Base Special Defense stat
+      - name: combined_defensive_stat
+        description: Defense + HP combined metric
+      - name: total_base_stats
+        description: Total base stats
+      - name: is_legendary
+        description: Legendary status
+      - name: is_mythical
+        description: Mythical status
+      - name: tier
+        description: Defensive tier (S = 350+, A = 300+, B = 250+, C = below 250)
+        tests:
+          - accepted_values:
+              values: ['S', 'A', 'B', 'C']
+      - name: overall_rank
+        description: Overall rank by defensive capability
+      - name: rank_within_legendary_status
+        description: Rank within legendary/non-legendary grouping
+  
+  - name: mart_type_effectiveness
+    description: Type matchup matrix showing effectiveness multipliers for all attacking type vs defending type combinations
+    columns:
+      - name: attacking_type
+        description: Type of the attacking move
+        tests:
+          - not_null
+      - name: defending_type
+        description: Type of the defending Pokémon
+        tests:
+          - not_null
+      - name: effectiveness_multiplier
+        description: Damage multiplier (2.0 = super effective, 1.0 = normal, 0.5 = not very effective, 0.0 = no effect)
+        tests:
+          - accepted_values:
+              values: [0.0, 0.5, 1.0, 2.0]
+      - name: effectiveness_label
+        description: Human-readable effectiveness label
+        tests:
+          - accepted_values:
+              values: ['Super Effective', 'Normal', 'Not Very Effective', 'No Effect']
+  
+  - name: mart_best_movesets
+    description: Top 3 most powerful moves for each Pokémon with STAB (Same Type Attack Bonus) indicators
+    columns:
+      - name: pokemon_id
+        description: Unique Pokémon identifier
+        tests:
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name
+      - name: primary_type
+        description: Primary type
+      - name: secondary_type
+        description: Secondary type
+      - name: move_name
+        description: Move name
+        tests:
+          - not_null
+      - name: move_type
+        description: Type of the move
+      - name: power
+        description: Base power of the move
+      - name: accuracy
+        description: Accuracy percentage
+      - name: damage_class
+        description: Physical or Special
+        tests:
+          - accepted_values:
+              values: ['physical', 'special']
+      - name: expected_damage
+        description: Power * accuracy / 100
+      - name: move_rank
+        description: Rank of this move for this Pokémon (1-3)
+      - name: is_stab
+        description: True if move type matches Pokémon type (gets 1.5x damage bonus in games)
+  
+  - name: mart_legendary_rankings
+    description: Legendary and mythical Pokémon ranked by total base stats for tier list creation
+    columns:
+      - name: pokemon_id
+        description: Unique Pokémon identifier
+        tests:
+          - not_null
+      - name: pokemon_name
+        description: Pokémon name
+      - name: primary_type
+        description: Primary type
+      - name: secondary_type
+        description: Secondary type
+      - name: is_legendary
+        description: True if legendary
+      - name: is_mythical
+        description: True if mythical
+      - name: generation
+        description: Generation introduced
+      - name: hp
+        description: Base HP stat
+      - name: attack
+        description: Base Attack stat
+      - name: defense
+        description: Base Defense stat
+      - name: sp_attack
+        description: Base Special Attack stat
+      - name: sp_defense
+        description: Base Special Defense stat
+      - name: speed
+        description: Base Speed stat
+      - name: total_base_stats
+        description: Sum of all base stats
+      - name: rarity_tier
+        description: Legendary or Mythical classification
+        tests:
+          - accepted_values:
+              values: ['Legendary', 'Mythical']
+      - name: overall_rank
+        description: Overall rank among all legendary/mythical Pokémon
+      - name: rank_within_tier
+        description: Rank within legendary or mythical tier

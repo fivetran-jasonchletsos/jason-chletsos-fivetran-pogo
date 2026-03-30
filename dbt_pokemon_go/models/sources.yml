@@ -1,0 +1,171 @@
+version: 2
+
+sources:
+  - name: pokemon_raw
+    description: Raw Pokémon data synced from PokéAPI via Fivetran custom connector
+    database: jason_chletsos
+    schema: jason_chletsos_pokemon_raw
+    tables:
+      - name: pokemon
+        description: Core Pokémon data including physical attributes and base experience
+        columns:
+          - name: id
+            description: Unique Pokémon ID (National Dex number)
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Pokémon name (lowercase)
+          - name: base_experience
+            description: Base experience yield when defeated
+          - name: height
+            description: Height in decimeters
+          - name: weight
+            description: Weight in hectograms
+          - name: is_default
+            description: Whether this is the default form
+          - name: order
+            description: Sort order in the Pokédex
+          - name: species_id
+            description: Foreign key to species table
+      
+      - name: pokemon_stats
+        description: Individual stat values for each Pokémon
+        columns:
+          - name: pokemon_id
+            description: Foreign key to pokemon table
+            tests:
+              - not_null
+          - name: stat_name
+            description: Name of the stat (hp, attack, defense, special-attack, special-defense, speed)
+            tests:
+              - not_null
+          - name: base_stat
+            description: Base value of the stat
+          - name: effort
+            description: Effort value (EV) gained when defeating this Pokémon
+      
+      - name: pokemon_types
+        description: Type assignments for each Pokémon
+        columns:
+          - name: pokemon_id
+            description: Foreign key to pokemon table
+            tests:
+              - not_null
+          - name: type_name
+            description: Type name (e.g., fire, water, grass)
+            tests:
+              - not_null
+          - name: slot
+            description: Type slot (1 = primary, 2 = secondary)
+      
+      - name: pokemon_abilities
+        description: Ability assignments for each Pokémon
+        columns:
+          - name: pokemon_id
+            description: Foreign key to pokemon table
+            tests:
+              - not_null
+          - name: ability_name
+            description: Ability name
+            tests:
+              - not_null
+          - name: is_hidden
+            description: Whether this is a hidden ability
+          - name: slot
+            description: Ability slot
+      
+      - name: pokemon_moves
+        description: Move learnsets for each Pokémon
+        columns:
+          - name: pokemon_id
+            description: Foreign key to pokemon table
+            tests:
+              - not_null
+          - name: move_name
+            description: Move name
+            tests:
+              - not_null
+          - name: level_learned_at
+            description: Level at which the move is learned (0 for non-level-up moves)
+          - name: learn_method
+            description: How the move is learned (level-up, machine, tutor)
+          - name: version_group
+            description: Game version group
+      
+      - name: types
+        description: Type effectiveness data
+        columns:
+          - name: id
+            description: Unique type ID
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Type name
+            tests:
+              - not_null
+          - name: double_damage_to
+            description: Comma-separated list of types this type deals 2x damage to
+          - name: half_damage_to
+            description: Comma-separated list of types this type deals 0.5x damage to
+          - name: no_damage_to
+            description: Comma-separated list of types this type deals 0x damage to
+          - name: double_damage_from
+            description: Comma-separated list of types that deal 2x damage to this type
+          - name: half_damage_from
+            description: Comma-separated list of types that deal 0.5x damage to this type
+          - name: no_damage_from
+            description: Comma-separated list of types that deal 0x damage to this type
+      
+      - name: moves
+        description: Move details including power, accuracy, and type
+        columns:
+          - name: id
+            description: Unique move ID
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Move name
+            tests:
+              - not_null
+          - name: accuracy
+            description: Move accuracy (0-100, NULL for moves that never miss)
+          - name: power
+            description: Move base power (NULL for status moves)
+          - name: pp
+            description: Power Points (number of times the move can be used)
+          - name: type
+            description: Move type
+          - name: damage_class
+            description: Damage class (physical, special, status)
+          - name: effect_chance
+            description: Chance of secondary effect occurring
+      
+      - name: species
+        description: Species-level data including legendary status and generation
+        columns:
+          - name: id
+            description: Unique species ID
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Species name
+            tests:
+              - not_null
+          - name: capture_rate
+            description: Base capture rate (0-255, higher = easier to catch)
+          - name: base_happiness
+            description: Base happiness value
+          - name: is_legendary
+            description: Whether this is a legendary Pokémon
+          - name: is_mythical
+            description: Whether this is a mythical Pokémon
+          - name: generation
+            description: Generation introduced
+          - name: habitat
+            description: Natural habitat
+          - name: shape
+            description: Body shape

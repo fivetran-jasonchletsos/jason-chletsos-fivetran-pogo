@@ -1,0 +1,9 @@
+# dbt core + Snowflake adapter
+dbt-core>=1.7.0,<2.0.0
+dbt-snowflake>=1.7.0,<2.0.0
+
+# Run Cache plugin — reduces warehouse compute by skipping unchanged models
+run-cache
+
+# dbt packages (installed via dbt deps, not pip — listed here for reference)
+# dbt-utils is declared in packages.yml

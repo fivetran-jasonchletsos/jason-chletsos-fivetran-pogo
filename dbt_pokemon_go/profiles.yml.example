@@ -1,0 +1,37 @@
+# profiles.yml.example
+# Copy this to profiles.yml and fill in your credentials for local development.
+# Fivetran's dbt Core transformation manages its own connection — this file
+# is only used when running dbt locally.
+
+pokemon_go:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "YOUR_SNOWFLAKE_ACCOUNT"
+      user: "YOUR_SNOWFLAKE_USER"
+      role: "YOUR_ROLE"
+      warehouse: "YOUR_WAREHOUSE"
+      database: YOUR_DATABASE
+      schema: pokemon_raw
+      threads: 4
+      client_session_keep_alive: False
+      query_tag: dbt_pokemon_go
+      # Key pair authentication
+      private_key_path: "/path/to/your/rsa_key.p8"
+      private_key_passphrase: "YOUR_PASSPHRASE"
+
+    prod:
+      type: snowflake
+      account: "YOUR_SNOWFLAKE_ACCOUNT"
+      user: "YOUR_SNOWFLAKE_USER"
+      role: "YOUR_ROLE"
+      warehouse: "YOUR_WAREHOUSE"
+      database: YOUR_DATABASE
+      schema: pokemon_raw
+      threads: 8
+      client_session_keep_alive: False
+      query_tag: dbt_pokemon_go_prod
+      # Key pair authentication
+      private_key_path: "/path/to/your/rsa_key.p8"
+      private_key_passphrase: "YOUR_PASSPHRASE"
