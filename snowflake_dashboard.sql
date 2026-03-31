@@ -11,69 +11,88 @@
 -- Context:
 --   Database : JASON_CHLETSOS
 --   Schemas  : POKEMON_MARTS  (tables)
---              POKEMON_STAGING (views, used for the stat radar tile)
 -- ============================================================
 
 
 -- ============================================================
--- TILE 1 — Scorecard row  (4 separate single-value tiles)
+-- TILE 1a — Total Pokémon
 -- Chart type: Scorecard
 -- ============================================================
-
--- 1a. Total Pokémon
 SELECT COUNT(*) AS total_pokemon
 FROM JASON_CHLETSOS.POKEMON_MARTS.DIM_POKEMON;
 
--- 1b. Total Moves
+
+-- ============================================================
+-- TILE 1b — Total Moves
+-- Chart type: Scorecard
+-- ============================================================
 SELECT COUNT(*) AS total_moves
 FROM JASON_CHLETSOS.POKEMON_MARTS.DIM_MOVES;
 
--- 1c. Legendary + Mythical Count
+
+-- ============================================================
+-- TILE 1c — Legendary + Mythical Count
+-- Chart type: Scorecard
+-- ============================================================
 SELECT COUNT(*) AS legendary_and_mythical
 FROM JASON_CHLETSOS.POKEMON_MARTS.DIM_POKEMON
-WHERE is_legendary OR is_mythical;
+WHERE is_legendary = TRUE OR is_mythical = TRUE;
 
--- 1d. Dual-type Pokémon
+
+-- ============================================================
+-- TILE 1d — Dual-type Pokémon
+-- Chart type: Scorecard
+-- ============================================================
 SELECT COUNT(*) AS dual_type_pokemon
 FROM JASON_CHLETSOS.POKEMON_MARTS.DIM_POKEMON
 WHERE secondary_type IS NOT NULL;
 
 
 -- ============================================================
--- TILE 2 — Top 20 Attackers
--- Chart type: Bar chart  |  X: pokemon_name  |  Y: attacker_score
+-- TILE 2 — Top 20 Attackers  (ranked by attack stat)
+-- Chart type: Bar chart  |  X: pokemon_name  |  Y: attack
 -- ============================================================
 SELECT
+    overall_rank,
     pokemon_name,
     primary_type,
-    attack_stat,
-    best_move_power,
-    attacker_score,
-    attacker_rank
+    secondary_type,
+    attack,
+    sp_attack,
+    total_base_stats,
+    tier,
+    is_legendary,
+    is_mythical
 FROM JASON_CHLETSOS.POKEMON_MARTS.MART_TOP_ATTACKERS
-WHERE attacker_rank <= 20
-ORDER BY attacker_rank;
+WHERE overall_rank <= 20
+ORDER BY overall_rank;
 
 
 -- ============================================================
--- TILE 3 — Top 20 Defenders
--- Chart type: Bar chart  |  X: pokemon_name  |  Y: defender_score
+-- TILE 3 — Top 20 Defenders  (ranked by defense + hp)
+-- Chart type: Bar chart  |  X: pokemon_name  |  Y: combined_defensive_stat
 -- ============================================================
 SELECT
+    overall_rank,
     pokemon_name,
     primary_type,
-    defense_stat,
-    stamina_stat,
-    defender_score,
-    defender_rank
+    secondary_type,
+    hp,
+    defense,
+    sp_defense,
+    combined_defensive_stat,
+    total_base_stats,
+    tier,
+    is_legendary,
+    is_mythical
 FROM JASON_CHLETSOS.POKEMON_MARTS.MART_TOP_DEFENDERS
-WHERE defender_rank <= 20
-ORDER BY defender_rank;
+WHERE overall_rank <= 20
+ORDER BY overall_rank;
 
 
 -- ============================================================
 -- TILE 4 — Pokémon Count by Primary Type
--- Chart type: Bar chart (horizontal)  |  X: pokemon_count  |  Y: primary_type
+-- Chart type: Bar chart  |  X: primary_type  |  Y: pokemon_count
 -- ============================================================
 SELECT
     primary_type,
@@ -85,46 +104,48 @@ ORDER BY pokemon_count DESC;
 
 
 -- ============================================================
--- TILE 5 — Legendary Rankings (Top 30)
--- Chart type: Bar chart  |  X: pokemon_name  |  Y: total_base_stats
---             Color by: is_legendary vs is_mythical
+-- TILE 5 — Legendary Rankings (Top 30 by total base stats)
+-- Chart type: Bar chart  |  X: pokemon_name  |  Y: total_base_stats  |  Color series: rarity_tier
 -- ============================================================
 SELECT
-    legendary_rank,
+    overall_rank,
     pokemon_name,
-    CASE
-        WHEN is_mythical THEN 'Mythical'
-        WHEN is_legendary THEN 'Legendary'
-    END AS legendary_class,
+    primary_type,
+    rarity_tier,
     total_base_stats,
-    primary_type
+    attack,
+    defense,
+    hp,
+    generation
 FROM JASON_CHLETSOS.POKEMON_MARTS.MART_LEGENDARY_RANKINGS
-WHERE legendary_rank <= 30
-ORDER BY legendary_rank;
+WHERE overall_rank <= 30
+ORDER BY overall_rank;
 
 
 -- ============================================================
--- TILE 6 — Best Movesets (Top 25 by combined power)
+-- TILE 6 — Best Moves per Pokémon (Top 3 moves, STAB highlighted)
 -- Chart type: Table
 -- ============================================================
 SELECT
-    moveset_rank,
     pokemon_name,
     primary_type,
-    fast_move,
-    fast_move_type,
-    charged_move,
-    charged_move_type,
-    combined_power
+    move_rank,
+    move_name,
+    move_type,
+    damage_class,
+    power,
+    accuracy,
+    expected_damage,
+    is_stab
 FROM JASON_CHLETSOS.POKEMON_MARTS.MART_BEST_MOVESETS
-WHERE moveset_rank <= 25
-ORDER BY moveset_rank;
+ORDER BY expected_damage DESC, pokemon_name, move_rank
+LIMIT 100;
 
 
 -- ============================================================
 -- TILE 7 — Type Effectiveness Heatmap
--- Chart type: Heatmap  |  X: defending_type  |  Y: attacking_type  |  Value: effectiveness_multiplier
--- (Snowsight heatmap: use Table view and apply conditional formatting if heatmap not available)
+-- Chart type: Table with conditional formatting
+--   (Snowsight: select Table view, apply color scale on effectiveness_multiplier)
 -- ============================================================
 SELECT
     attacking_type,
@@ -136,13 +157,13 @@ ORDER BY attacking_type, defending_type;
 
 
 -- ============================================================
--- TILE 8 — Average Base Stats by Type (Radar / grouped bar)
--- Chart type: Bar chart (grouped)  |  X: primary_type  |  Y: avg stat  |  Series: stat_name
+-- TILE 8 — Average Base Stats by Primary Type (grouped bar)
+-- Chart type: Bar chart (grouped)  |  X: primary_type  |  Y: avg_base_stat  |  Series: stat_name
 -- ============================================================
 SELECT
     d.primary_type,
     f.stat_name,
-    ROUND(AVG(f.base_stat), 1) AS avg_base_stat
+    ROUND(AVG(f.base_stat_value), 1) AS avg_base_stat
 FROM JASON_CHLETSOS.POKEMON_MARTS.FCT_POKEMON_STATS f
 JOIN JASON_CHLETSOS.POKEMON_MARTS.DIM_POKEMON d
     ON f.pokemon_id = d.pokemon_id
@@ -154,47 +175,41 @@ ORDER BY d.primary_type, f.stat_name;
 
 -- ============================================================
 -- TILE 9 — Move Power Distribution by Damage Class
--- Chart type: Bar chart  |  X: power_bucket  |  Y: move_count  |  Series: damage_class
+-- Chart type: Bar chart (grouped)  |  X: power_bucket  |  Y: move_count  |  Series: damage_class
 -- ============================================================
 SELECT
     damage_class,
     CASE
-        WHEN power < 40  THEN '< 40'
-        WHEN power < 60  THEN '40–59'
-        WHEN power < 80  THEN '60–79'
-        WHEN power < 100 THEN '80–99'
-        WHEN power < 120 THEN '100–119'
-        ELSE '120+'
+        WHEN power < 40  THEN '1: < 40'
+        WHEN power < 60  THEN '2: 40–59'
+        WHEN power < 80  THEN '3: 60–79'
+        WHEN power < 100 THEN '4: 80–99'
+        WHEN power < 120 THEN '5: 100–119'
+        ELSE                   '6: 120+'
     END AS power_bucket,
     COUNT(*) AS move_count
 FROM JASON_CHLETSOS.POKEMON_MARTS.DIM_MOVES
 WHERE power IS NOT NULL
   AND damage_class IN ('physical', 'special')
 GROUP BY damage_class, power_bucket
-ORDER BY damage_class,
-    CASE power_bucket
-        WHEN '< 40'   THEN 1
-        WHEN '40–59'  THEN 2
-        WHEN '60–79'  THEN 3
-        WHEN '80–99'  THEN 4
-        WHEN '100–119' THEN 5
-        ELSE 6
-    END;
+ORDER BY damage_class, power_bucket;
 
 
 -- ============================================================
--- TILE 10 — Attacker vs Defender Scatter (all Pokémon)
--- Chart type: Scatter  |  X: attack_stat  |  Y: defense_stat  |  Size: total_base_stats
+-- TILE 10 — Attack vs Defense Scatter (all non-legendary Pokémon)
+-- Chart type: Scatter  |  X: attack  |  Y: defense  |  Size: total_base_stats
 -- ============================================================
 SELECT
-    d.pokemon_name,
+    f.pokemon_name,
     d.primary_type,
-    MAX(CASE WHEN f.stat_name = 'attack'  THEN f.base_stat END) AS attack_stat,
-    MAX(CASE WHEN f.stat_name = 'defense' THEN f.base_stat END) AS defense_stat,
-    MAX(CASE WHEN f.stat_name = 'hp'      THEN f.base_stat END) AS hp_stat,
-    SUM(f.base_stat) AS total_base_stats
+    f.attack,
+    f.defense,
+    f.hp,
+    f.total_base_stats
 FROM JASON_CHLETSOS.POKEMON_MARTS.FCT_POKEMON_STATS f
 JOIN JASON_CHLETSOS.POKEMON_MARTS.DIM_POKEMON d
     ON f.pokemon_id = d.pokemon_id
-GROUP BY d.pokemon_name, d.primary_type
-HAVING attack_stat IS NOT NULL AND defense_stat IS NOT NULL;
+WHERE d.is_legendary = FALSE
+  AND d.is_mythical  = FALSE
+  AND f.attack  IS NOT NULL
+  AND f.defense IS NOT NULL;
