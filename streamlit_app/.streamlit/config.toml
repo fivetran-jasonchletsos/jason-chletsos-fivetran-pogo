@@ -4,6 +4,11 @@ address = "0.0.0.0"
 enableCORS = true
 enableXsrfProtection = false
 headless = true
+enableWebsocketCompression = true
+maxUploadSize = 200
 
 [browser]
 gatherUsageStats = false
+
+[runner]
+fastReruns = false
