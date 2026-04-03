@@ -43,18 +43,18 @@ def get_connection():
     database   = os.environ.get("SNOWFLAKE_DATABASE",  "jason_chletsos")
 
     pem_content = os.environ.get("SNOWFLAKE_PRIVATE_KEY_CONTENT")
+    passphrase_str = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE", "Guy2001@#!")
 
     if pem_content:
-        # AWS path — key content injected as env var
+        # AWS path — key content injected as env var from Secrets Manager
         pem_bytes = pem_content.encode()
-        passphrase = None
     else:
         # Local dev path — read from disk
-        key_path   = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PATH", "/Users/jason.chletsos/rsa_key.p8")
-        passphrase_str = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE", "Guy2001@#!")
+        key_path = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PATH", "/Users/jason.chletsos/rsa_key.p8")
         with open(key_path, "rb") as f:
             pem_bytes = f.read()
-        passphrase = passphrase_str.encode() if passphrase_str else None
+
+    passphrase = passphrase_str.encode() if passphrase_str else None
 
     private_key = load_pem_private_key(pem_bytes, password=passphrase)
     private_key_der = private_key.private_bytes(
@@ -75,8 +75,16 @@ def get_connection():
 
 @st.cache_data(ttl=3600, show_spinner="Querying Snowflake…")
 def query(sql: str) -> pd.DataFrame:
-    conn = get_connection()
-    return pd.read_sql(textwrap.dedent(sql), conn)
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(textwrap.dedent(sql))
+        df = cur.fetch_pandas_all()
+        df.columns = df.columns.str.lower()
+        return df
+    except Exception as e:
+        st.error(f"Snowflake query failed: {e}")
+        st.stop()
 
 
 # ── Sidebar navigation ─────────────────────────────────────────────────────────
@@ -152,7 +160,6 @@ if page == "🏠 Overview":
             GROUP BY primary_type
             ORDER BY pokemon_count DESC
         """)
-        df_types.columns = df_types.columns.str.lower()
         fig = px.bar(
             df_types, x="pokemon_count", y="primary_type",
             orientation="h",
@@ -172,7 +179,6 @@ if page == "🏠 Overview":
             GROUP BY tier
             ORDER BY tier
         """)
-        df_tier.columns = df_tier.columns.str.lower()
         fig2 = px.pie(
             df_tier, names="tier", values="pokemon_count",
             color="tier",
@@ -204,7 +210,6 @@ elif page == "⚔️  Top Attackers":
         ORDER BY overall_rank
         LIMIT {top_n}
     """)
-    df.columns = df.columns.str.lower()
 
     # Bar chart
     fig = px.bar(
@@ -261,7 +266,6 @@ elif page == "🛡️  Top Defenders":
         ORDER BY overall_rank
         LIMIT {top_n}
     """)
-    df.columns = df.columns.str.lower()
 
     fig = px.bar(
         df, x="combined_defensive_stat", y="pokemon_name",
@@ -309,7 +313,6 @@ elif page == "🌟 Legendaries":
         FROM POKEMON_MARTS.MART_LEGENDARY_RANKINGS
         ORDER BY overall_rank
     """)
-    df.columns = df.columns.str.lower()
 
     col1, col2 = st.columns([2, 1])
 
@@ -398,7 +401,6 @@ elif page == "💥 Best Movesets":
         ORDER BY expected_damage DESC NULLS LAST
         LIMIT {top_n}
     """)
-    df.columns = df.columns.str.lower()
 
     fig = px.bar(
         df, x="expected_damage", y="pokemon_name",
@@ -433,7 +435,6 @@ elif page == "💥 Best Movesets":
         GROUP BY damage_class, power_bucket
         ORDER BY damage_class, power_bucket
     """)
-    df_dist.columns = df_dist.columns.str.lower()
     fig2 = px.bar(
         df_dist, x="power_bucket", y="move_count",
         color="damage_class", barmode="group",
@@ -459,7 +460,6 @@ elif page == "🔥 Type Effectiveness":
         FROM POKEMON_MARTS.MART_TYPE_EFFECTIVENESS
         ORDER BY attacking_type, defending_type
     """)
-    df.columns = df.columns.str.lower()
 
     pivot = df.pivot(index="attacking_type", columns="defending_type", values="effectiveness_multiplier")
 
@@ -517,7 +517,6 @@ elif page == "📊 Stats by Type":
         GROUP BY d.primary_type, f.stat_name
         ORDER BY d.primary_type, f.stat_name
     """)
-    df.columns = df.columns.str.lower()
 
     stat_choice = st.multiselect(
         "Stats to display",
@@ -544,7 +543,6 @@ elif page == "📊 Stats by Type":
         JOIN POKEMON_MARTS.DIM_POKEMON d ON f.pokemon_id = d.pokemon_id
         WHERE f.attack IS NOT NULL AND f.defense IS NOT NULL
     """)
-    df_scatter.columns = df_scatter.columns.str.lower()
 
     show_legendary = st.checkbox("Highlight Legendaries", value=True)
     if show_legendary:
