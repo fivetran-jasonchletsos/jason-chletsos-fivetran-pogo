@@ -6,6 +6,6 @@ pokemon_databricks:
       host: "dbc-c48d38b1-67f3.cloud.databricks.com"
       http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
       token: "{{ env_var('DATABRICKS_TOKEN') }}"
-      catalog: jason_chletsos_pokemon
+      catalog: jason_chletsos
       schema: pokemon_marts
       threads: 4

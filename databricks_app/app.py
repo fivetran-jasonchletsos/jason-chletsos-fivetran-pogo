@@ -52,7 +52,7 @@ TYPE_COLORS = {
     "dark": "#705848", "steel": "#B8B8D0", "fairy": "#EE99AC",
 }
 
-CATALOG = "jason_chletsos_pokemon"
+CATALOG = "jason_chletsos"
 SCHEMA  = "pokemon_marts"
 
 # ── Databricks connection ──────────────────────────────────────────────────────

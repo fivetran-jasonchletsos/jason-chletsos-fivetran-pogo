@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: pokemon_snowflake
     description: "Pokémon marts synced from Snowflake via Fivetran"
-    database: jason_chletsos_pokemon
+    database: jason_chletsos
     schema: pokemon_source
     tables:
       - name: dim_pokemon
