@@ -101,6 +101,13 @@ st.markdown(f"""
       letter-spacing: 0.05em;
   }}
 
+  /* ── Hide Streamlit default header/toolbar ── */
+  [data-testid="stHeader"],
+  [data-testid="stToolbar"],
+  #stDecoration {{
+      display: none !important;
+  }}
+
   /* ── Caption ── */
   [data-testid="stCaptionContainer"] {{ color: {WESCO_MUTED} !important; }}
 
