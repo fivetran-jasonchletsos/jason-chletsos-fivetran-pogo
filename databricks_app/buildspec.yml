@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 249080915751.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - docker build --platform linux/amd64 -t pokemon-go-databricks:latest .
+      - docker tag pokemon-go-databricks:latest 249080915751.dkr.ecr.us-east-1.amazonaws.com/pokemon-go-databricks:latest
+  post_build:
+    commands:
+      - docker push 249080915751.dkr.ecr.us-east-1.amazonaws.com/pokemon-go-databricks:latest
+      - aws ecs update-service --cluster pokemon-cluster --service pokemon-databricks --force-new-deployment --region us-east-1
+      - echo "Databricks app deployment triggered"

@@ -1,0 +1,22 @@
+name: 'pokemon_go_databricks'
+version: '1.0.0'
+config-version: 2
+
+profile: 'pokemon_databricks'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analyses"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  pokemon_go_databricks:
+    staging:
+      +materialized: view
+      +schema: pokemon_staging
+    marts:
+      +materialized: table
+      +schema: pokemon_marts

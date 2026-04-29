@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: pokemon_snowflake
+    description: "Pokémon marts synced from Snowflake via Fivetran"
+    database: jason_chletsos_pokemon
+    schema: pokemon_source
+    tables:
+      - name: dim_pokemon
+      - name: dim_moves
+      - name: fct_pokemon_stats
+      - name: mart_top_attackers
+      - name: mart_top_defenders
+      - name: mart_best_movesets
+      - name: mart_legendary_rankings
+      - name: mart_type_effectiveness

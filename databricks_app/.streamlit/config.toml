@@ -1,0 +1,13 @@
+[server]
+port = 8080
+address = "0.0.0.0"
+enableCORS = false
+enableXsrfProtection = false
+headless = true
+enableWebsocketCompression = true
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+fastReruns = false
