@@ -92,11 +92,17 @@ def get_connection():
         warehouse=warehouse,
         database=database,
         private_key=private_key_der,
-        login_timeout=30,
-        network_timeout=60,
+        login_timeout=60,
+        network_timeout=120,
     )
-    # Warm the warehouse immediately so the first real query doesn't pay resume cost
-    conn.cursor().execute("SELECT 1")
+    # Warehouse auto-suspends after 60s — explicitly resume then warm it so the
+    # first real query doesn't pay the cold-start cost
+    cur = conn.cursor()
+    try:
+        cur.execute(f"ALTER WAREHOUSE {warehouse} RESUME IF SUSPENDED")
+    except Exception:
+        pass  # may lack OPERATE privilege — that's fine, SELECT 1 will still resume it
+    cur.execute("SELECT 1")
     return conn
 
 
