@@ -3,8 +3,8 @@ version: 2
 sources:
   - name: pokemon_raw
     description: Raw Pokémon data synced from PokéAPI via Fivetran custom connector
-    database: jason_chletsos
-    schema: jason_chletsos_pokemon_raw
+    database: chrisrudolph
+    schema: pokemon_raw
     tables:
       - name: pokemon
         description: Core Pokémon data including physical attributes and base experience

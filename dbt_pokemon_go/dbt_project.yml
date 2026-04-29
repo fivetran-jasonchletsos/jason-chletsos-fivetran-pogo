@@ -6,7 +6,7 @@ config-version: 2
 
 # Profile name matches Fivetran destination group ID (used by Fivetran dbt Core transformation)
 # For local development, ensure your profiles.yml has a profile named 'twilight_expecting'
-profile: 'twilight_expecting'
+profile: 'image_rend'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
