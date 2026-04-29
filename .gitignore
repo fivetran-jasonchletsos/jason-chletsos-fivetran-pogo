@@ -18,3 +18,4 @@ __pycache__/
 
 # macOS
 .DS_Store
+fivetran_pokemon_databricks_connector/files/
