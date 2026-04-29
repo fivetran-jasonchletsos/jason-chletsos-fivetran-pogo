@@ -1,16 +1,24 @@
 version: 2
 
 sources:
-  - name: pokemon_snowflake
-    description: "Pokémon marts synced from Snowflake via Fivetran"
+  - name: pokemon_raw
+    description: "Raw Pokémon data synced from PokéAPI via Fivetran custom connector"
     database: jason_chletsos
-    schema: pokemon_source
+    schema: pokemon_raw
     tables:
-      - name: dim_pokemon
-      - name: dim_moves
-      - name: fct_pokemon_stats
-      - name: mart_top_attackers
-      - name: mart_top_defenders
-      - name: mart_best_movesets
-      - name: mart_legendary_rankings
-      - name: mart_type_effectiveness
+      - name: pokemon
+        description: "Core Pokémon data — one row per Pokémon form"
+      - name: pokemon_stats
+        description: "Base stats per Pokémon (hp, attack, defense, etc.)"
+      - name: pokemon_types
+        description: "Type assignments per Pokémon (slot 1 = primary, slot 2 = secondary)"
+      - name: pokemon_abilities
+        description: "Ability assignments per Pokémon"
+      - name: pokemon_moves
+        description: "Move learnset per Pokémon"
+      - name: moves
+        description: "Move definitions — power, accuracy, type, damage class"
+      - name: species
+        description: "Species metadata — legendary, mythical, generation, habitat"
+      - name: types
+        description: "Type definitions and damage relations"
