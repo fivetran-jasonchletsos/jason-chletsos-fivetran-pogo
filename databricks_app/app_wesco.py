@@ -20,7 +20,7 @@ st.set_page_config(
     page_title="Pokémon GO Analytics | Wesco",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",  # collapsed by default on mobile
 )
 
 # ── Wesco brand colours ────────────────────────────────────────────────────────
@@ -34,7 +34,13 @@ WESCO_BORDER     = "#1F3044"
 WESCO_TEXT       = "#F0F4F8"
 WESCO_MUTED      = "#8A9BB0"
 
-# ── Global CSS ─────────────────────────────────────────────────────────────────
+# ── Viewport meta tag (critical for mobile scaling) ───────────────────────────
+st.markdown(
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">',
+    unsafe_allow_html=True,
+)
+
+# ── Global CSS (desktop + responsive) ─────────────────────────────────────────
 st.markdown(f"""
 <style>
   /* ── Base ── */
@@ -54,15 +60,25 @@ st.markdown(f"""
   /* ── Sidebar nav radio ── */
   [data-testid="stSidebar"] [role="radiogroup"] label {{
       border-radius: 6px;
-      padding: 6px 10px;
-      margin-bottom: 2px;
+      padding: 8px 12px;
+      margin-bottom: 4px;
       transition: background 0.15s;
+      min-height: 44px;          /* touch-friendly tap target */
+      display: flex;
+      align-items: center;
   }}
   [data-testid="stSidebar"] [role="radiogroup"] label:hover {{
       background: {WESCO_BORDER} !important;
   }}
   [data-testid="stSidebar"] [data-baseweb="radio"] input:checked + div {{
       background: {WESCO_GREEN} !important;
+  }}
+
+  /* ── Sidebar toggle button — bigger on mobile ── */
+  [data-testid="stSidebarCollapsedControl"] button,
+  [data-testid="stSidebarNavCollapseIcon"] {{
+      min-width: 44px !important;
+      min-height: 44px !important;
   }}
 
   /* ── Metric cards ── */
@@ -73,8 +89,17 @@ st.markdown(f"""
       border-radius: 8px;
       padding: 16px 20px !important;
   }}
-  [data-testid="stMetricLabel"] {{ color: {WESCO_MUTED} !important; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }}
-  [data-testid="stMetricValue"] {{ color: {WESCO_TEXT} !important; font-size: 2rem !important; font-weight: 700; }}
+  [data-testid="stMetricLabel"] {{
+      color: {WESCO_MUTED} !important;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+  }}
+  [data-testid="stMetricValue"] {{
+      color: {WESCO_TEXT} !important;
+      font-size: 2rem !important;
+      font-weight: 700;
+  }}
 
   /* ── Headings ── */
   h1, h2, h3, h4 {{ color: {WESCO_TEXT} !important; }}
@@ -90,8 +115,13 @@ st.markdown(f"""
       border-radius: 8px;
   }}
 
-  /* ── Dataframe ── */
-  [data-testid="stDataFrame"] {{ border: 1px solid {WESCO_BORDER}; border-radius: 8px; }}
+  /* ── Dataframe — horizontal scroll on small screens ── */
+  [data-testid="stDataFrame"] {{
+      border: 1px solid {WESCO_BORDER};
+      border-radius: 8px;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+  }}
 
   /* ── Selectbox / Slider labels ── */
   label, .stSelectbox label, .stSlider label, .stCheckbox label {{
@@ -99,6 +129,13 @@ st.markdown(f"""
       font-size: 0.82rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+  }}
+
+  /* ── Touch-friendly inputs ── */
+  [data-testid="stSelectbox"] > div,
+  [data-testid="stCheckbox"] label,
+  button {{
+      min-height: 44px;
   }}
 
   /* ── Hide Streamlit default header/toolbar ── */
@@ -134,6 +171,96 @@ st.markdown(f"""
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 6px;
+  }}
+
+  /* ════════════════════════════════════════════════════════════════
+     RESPONSIVE — Tablet  (≤ 1024px)
+     Streamlit columns stay side-by-side but get more breathing room
+  ════════════════════════════════════════════════════════════════ */
+  @media (max-width: 1024px) {{
+    [data-testid="stMetricValue"] {{ font-size: 1.6rem !important; }}
+    h1 {{ font-size: 1.5rem !important; }}
+    h2 {{ font-size: 1.2rem !important; }}
+    .wesco-banner {{ font-size: 0.75rem; padding: 8px 14px; }}
+    /* Give the main content area full width */
+    .main .block-container {{
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+    }}
+  }}
+
+  /* ════════════════════════════════════════════════════════════════
+     RESPONSIVE — Mobile  (≤ 768px)
+     Stack Streamlit columns, shrink fonts, full-width everything
+  ════════════════════════════════════════════════════════════════ */
+  @media (max-width: 768px) {{
+    /* Stack all st.columns() side-by-side → vertical */
+    [data-testid="stHorizontalBlock"] {{
+        flex-direction: column !important;
+    }}
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }}
+
+    /* Full-width main block */
+    .main .block-container {{
+        padding: 0.75rem 0.75rem 2rem 0.75rem !important;
+        max-width: 100% !important;
+    }}
+
+    /* Shrink headings */
+    h1 {{ font-size: 1.3rem !important; padding-bottom: 6px; }}
+    h2 {{ font-size: 1.1rem !important; }}
+    h3 {{ font-size: 1rem !important; }}
+
+    /* Metric cards — 2-per-row grid on phone */
+    [data-testid="stMetric"] {{
+        padding: 12px 14px !important;
+    }}
+    [data-testid="stMetricValue"] {{ font-size: 1.4rem !important; }}
+    [data-testid="stMetricLabel"] {{ font-size: 0.7rem !important; }}
+
+    /* Banner wraps gracefully */
+    .wesco-banner {{
+        font-size: 0.7rem;
+        padding: 8px 12px;
+        line-height: 1.6;
+    }}
+
+    /* Plotly charts — allow horizontal scroll if needed */
+    [data-testid="stPlotlyChart"] {{
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }}
+
+    /* Sidebar full-screen overlay on mobile */
+    [data-testid="stSidebar"] {{
+        width: 85vw !important;
+        max-width: 320px;
+    }}
+
+    /* Sliders and selects full width */
+    [data-testid="stSlider"],
+    [data-testid="stSelectbox"] {{
+        width: 100% !important;
+    }}
+
+    /* Section pills */
+    .section-pill {{ font-size: 0.65rem; padding: 2px 8px; }}
+  }}
+
+  /* ════════════════════════════════════════════════════════════════
+     RESPONSIVE — Small phone  (≤ 480px)
+  ════════════════════════════════════════════════════════════════ */
+  @media (max-width: 480px) {{
+    h1 {{ font-size: 1.15rem !important; }}
+    [data-testid="stMetricValue"] {{ font-size: 1.2rem !important; }}
+    .wesco-banner {{ font-size: 0.65rem; }}
+    /* Logo in sidebar smaller */
+    [data-testid="stSidebar"] img {{ width: 110px !important; }}
   }}
 </style>
 """, unsafe_allow_html=True)
@@ -317,7 +444,7 @@ if page == "🏠 Overview":
         )
         fig.update_layout(showlegend=False, height=500, yaxis={"categoryorder": "total ascending"})
         apply_wesco_theme(fig)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     with col_right:
         st.markdown("<div class='section-pill'>Tiers</div>", unsafe_allow_html=True)
@@ -337,7 +464,7 @@ if page == "🏠 Overview":
                            marker=dict(line=dict(color=WESCO_NAVY, width=2)))
         fig2.update_layout(showlegend=False, height=500)
         apply_wesco_theme(fig2)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -371,7 +498,7 @@ elif page == "⚔️  Top Attackers":
     )
     fig.update_layout(height=max(400, top_n * 22), yaxis={"categoryorder": "total ascending"})
     apply_wesco_theme(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     st.markdown("<div class='section-pill'>Attack vs Sp. Attack</div>", unsafe_allow_html=True)
     st.subheader("Attack vs Special Attack")
@@ -384,7 +511,7 @@ elif page == "⚔️  Top Attackers":
     fig2.update_traces(textposition="top center")
     fig2.update_layout(height=450)
     apply_wesco_theme(fig2)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
 
     with st.expander("Raw data"):
         st.dataframe(df, use_container_width=True)
@@ -421,7 +548,7 @@ elif page == "🛡️  Top Defenders":
     )
     fig.update_layout(height=max(400, top_n * 22), yaxis={"categoryorder": "total ascending"})
     apply_wesco_theme(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     st.markdown("<div class='section-pill'>Stat Breakdown</div>", unsafe_allow_html=True)
     st.subheader("Defensive Stat Breakdown")
@@ -436,7 +563,7 @@ elif page == "🛡️  Top Defenders":
     )
     fig2.update_layout(height=max(400, top_n * 22), yaxis={"categoryorder": "total ascending"})
     apply_wesco_theme(fig2)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
 
     with st.expander("Raw data"):
         st.dataframe(df, use_container_width=True)
@@ -470,7 +597,7 @@ elif page == "🌟 Legendaries":
         )
         fig.update_layout(height=900, yaxis={"categoryorder": "total ascending"})
         apply_wesco_theme(fig)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     with col2:
         st.markdown("<div class='section-pill'>By Generation</div>", unsafe_allow_html=True)
@@ -479,7 +606,7 @@ elif page == "🌟 Legendaries":
         fig2.update_traces(marker=dict(line=dict(color=WESCO_NAVY, width=2)))
         fig2.update_layout(height=350)
         apply_wesco_theme(fig2)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
 
         st.markdown("<div class='section-pill'>Rarity Split</div>", unsafe_allow_html=True)
         df_rarity = df.groupby("rarity_tier").size().reset_index(name="count")
@@ -492,7 +619,7 @@ elif page == "🌟 Legendaries":
         fig3.update_traces(marker=dict(line=dict(color=WESCO_NAVY, width=2)))
         fig3.update_layout(height=350)
         apply_wesco_theme(fig3)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, use_container_width=True, config={"responsive": True})
 
     st.divider()
     st.markdown("<div class='section-pill'>Stat Radar</div>", unsafe_allow_html=True)
@@ -525,7 +652,7 @@ elif page == "🌟 Legendaries":
             paper_bgcolor="rgba(0,0,0,0)",
             font_color=WESCO_TEXT,
         )
-        st.plotly_chart(fig_radar, use_container_width=True)
+        st.plotly_chart(fig_radar, use_container_width=True, config={"responsive": True})
 
     with st.expander("Raw data"):
         st.dataframe(df, use_container_width=True)
@@ -568,7 +695,7 @@ elif page == "💥 Best Movesets":
     )
     fig.update_layout(height=max(400, top_n * 18), yaxis={"categoryorder": "total ascending"})
     apply_wesco_theme(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     st.markdown("<div class='section-pill'>Power Distribution</div>", unsafe_allow_html=True)
     st.subheader("Move Power Distribution")
@@ -596,7 +723,7 @@ elif page == "💥 Best Movesets":
     )
     fig2.update_layout(height=350)
     apply_wesco_theme(fig2)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
 
     with st.expander("Raw data"):
         st.dataframe(df, use_container_width=True)
@@ -636,7 +763,7 @@ elif page == "🔥 Type Effectiveness":
         paper_bgcolor="rgba(0,0,0,0)",
         font_color=WESCO_TEXT,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     st.divider()
     st.markdown("<div class='section-pill'>Single Type Drill-down</div>", unsafe_allow_html=True)
@@ -655,7 +782,7 @@ elif page == "🔥 Type Effectiveness":
                    annotation_font_color=WESCO_MUTED)
     fig2.update_layout(height=350, showlegend=False)
     apply_wesco_theme(fig2)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -700,7 +827,7 @@ elif page == "📊 Stats by Type":
     )
     fig.update_layout(height=450, xaxis={"tickangle": -45})
     apply_wesco_theme(fig)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     st.markdown("<div class='section-pill'>Attack vs Defense</div>", unsafe_allow_html=True)
     st.subheader("Attack vs Defense — All Pokémon")
@@ -734,4 +861,4 @@ elif page == "📊 Stats by Type":
     )
     fig2.update_layout(height=500)
     apply_wesco_theme(fig2)
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True, config={"responsive": True})
